@@ -1,9 +1,9 @@
-import { Button } from "@/components/ui/button";
 
-export default function Home() {
+
+const page = () => {
   return (
-    <>
-    <Button variant="outline">Hello</Button>
-    </>
+    <div>page</div>
   )
 }
+
+export default page
