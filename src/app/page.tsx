@@ -3,9 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 
 const page = () => {
+  const [value, setValue] = useState("")
+
   const trpc = useTRPC();
   const invoke = useMutation(trpc.invoke.mutationOptions({
     onSuccess: () => {
@@ -14,7 +18,8 @@ const page = () => {
   }));
   return (
     <div className="p-4 max-w-7xl mx-auto">
-      <Button className="rounded-none" disabled={invoke.isPending} variant="outline" onClick={() => invoke.mutate({ text: "John" })}>
+      <Input className="max-w-3xl" value={value} onChange={(e) => setValue(e.target.value)}/>
+      <Button className="rounded-none" disabled={invoke.isPending} variant="outline" onClick={() => {invoke.mutate({ value: value }); setValue("")}}>
         Send Inngest Event
       </Button>
     </div>
