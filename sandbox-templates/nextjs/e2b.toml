@@ -1,0 +1,17 @@
+# This is a config for E2B sandbox template.
+# You can use template ID (66e4m7w4b19maktaszb0) or template name (lovable-vibe-test) to create a sandbox:
+
+# Python SDK
+# from e2b import Sandbox, AsyncSandbox
+# sandbox = Sandbox.create("lovable-vibe-test") # Sync sandbox
+# sandbox = await AsyncSandbox.create("lovable-vibe-test") # Async sandbox
+
+# JS SDK
+# import { Sandbox } from 'e2b'
+# const sandbox = await Sandbox.create('lovable-vibe-test')
+
+team_id = "e0fc9a49-ad63-4a96-8b17-62a539551fb5"
+start_cmd = 'bash -lc "/home/user/compile_page.sh"'
+dockerfile = "e2b.Dockerfile"
+template_name = "lovable-vibe-test"
+template_id = "66e4m7w4b19maktaszb0"
