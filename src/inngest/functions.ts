@@ -4,10 +4,11 @@ import {
   createNetwork,
   createTool,
   gemini,
+  openai,
   type Tool,
 } from "@inngest/agent-kit";
 import { Sandbox } from "@e2b/code-interpreter";
-import { getSandbox, lastAssistantTextMessageContent } from "./utils";
+import { getSandbox, lastAssistantTextMessageContent, delay } from "./utils";
 import { z } from "zod";
 import { PROMPT } from "@/prompt";
 import prisma from "@/lib/db";
@@ -30,7 +31,12 @@ export const codeAgentFunction = inngest.createFunction(
       name: "code-agent",
       description: "An expert coding agent",
       system: PROMPT,
-      model: gemini({ model: "gemini-2.5-flash" }),
+      // model: gemini({ model: "gemini-3-pro-preview" }),
+      model: openai({
+        model: "openai/gpt-oss-120b",
+        baseUrl: "https://api.groq.com/openai/v1/",
+        apiKey: process.env.GROQ_API_KEY,
+      }),
       tools: [
         createTool({
           name: "terminal",
@@ -40,6 +46,7 @@ export const codeAgentFunction = inngest.createFunction(
           }),
           handler: async ({ command }, { step }) => {
             return await step?.run("terminal", async () => {
+              await delay(2000);
               const buffers = { stdout: "", stderr: "" };
               try {
                 const sandbox = await getSandbox(sandboxId);
@@ -72,10 +79,14 @@ export const codeAgentFunction = inngest.createFunction(
               })
             ),
           }),
-          handler: async ({ files }, { step, network }: Tool.Options<AgentState>) => {
+          handler: async (
+            { files },
+            { step, network }: Tool.Options<AgentState>
+          ) => {
             const newFiles = await step?.run(
               "createOrUpdateFiles",
               async () => {
+                await delay(2000);
                 try {
                   const updatedFiles = network.state.data.files || {};
                   const sandbox = await getSandbox(sandboxId);
@@ -103,6 +114,7 @@ export const codeAgentFunction = inngest.createFunction(
           }),
           handler: async ({ files }, { step }) => {
             return await step?.run("readFiles", async () => {
+              await delay(2000); // 2 second rate limit delay
               try {
                 const sandbox = await getSandbox(sandboxId);
                 const contents = [];
@@ -156,11 +168,14 @@ export const codeAgentFunction = inngest.createFunction(
       const host = sandbox.getHost(3000);
       return `https://${host}`;
     });
+    
 
     await step.run("save-result", async () => {
+      await delay(2000); // 2 second rate limit delay
       if (isError)
         await prisma.message.create({
           data: {
+            projectId: event.data.projectId,
             content: "Something went wrong. please try again.",
             role: "ASSISTANT",
             type: "ERROR",
@@ -169,6 +184,7 @@ export const codeAgentFunction = inngest.createFunction(
 
       return await prisma.message.create({
         data: {
+          projectId: event.data.projectId,
           content: result.state.data.summary,
           role: "ASSISTANT",
           type: "RESULT",
