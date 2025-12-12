@@ -63,6 +63,7 @@
     "react-dom": "19.2.0",
     "react-hook-form": "^7.68.0",
     "react-resizable-panels": "^3.0.6",
+    "react-textarea-autosize": "^8.5.9",
     "recharts": "2.15.4",
     "serialize-error-cjs": "^0.2.0",
     "server-only": "^0.0.1",
@@ -74,7 +75,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.17",
-    "@types/node": "^20.19.25",
+    "@types/node": "^25.0.1",
     "@types/pg": "^8.15.6",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",

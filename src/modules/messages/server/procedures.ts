@@ -5,15 +5,27 @@ import { delay } from "@/inngest/utils";
 import { z } from "zod";
 
 export const messageRouter = createTRPCRouter({
-  getMany: baseProcedure.query(async () => {
-    const messages = await prisma.message.findMany({
-      orderBy: {
-        updatedAt: "asc",
-      },
-    });
+  getMany: baseProcedure
+    .input(
+      z.object({
+        projectId: z.string().min(1, { message: "Project ID is required" }),
+      })
+    )
+    .query(async ({ input }) => {
+      const messages = await prisma.message.findMany({
+        where: {
+          projectId: input.projectId
+        },
+        include: {
+          fragment: true
+        },
+        orderBy: {
+          updatedAt: "asc",
+        },
+      });
 
-    return messages;
-  }),
+      return messages;
+    }),
   create: baseProcedure
     .input(
       z.object({
@@ -21,13 +33,11 @@ export const messageRouter = createTRPCRouter({
           .string()
           .min(1, { message: "Value is required" })
           .max(10000, { message: "Value is too long" }),
-        projectId: z
-          .string()
-          .min(1, { message: "Project ID is required" })
+        projectId: z.string().min(1, { message: "Project ID is required" }),
       })
     )
     .mutation(async ({ input }) => {
-      await delay(2000); // 2 second rate limit delay
+      await delay(1000); // 1 second rate limit delay
       const createMessage = await prisma.message.create({
         data: {
           projectId: input.projectId,
@@ -37,12 +47,12 @@ export const messageRouter = createTRPCRouter({
         },
       });
 
-      await delay(2000); // 2 second rate limit delay
+      await delay(1000); // 1 second rate limit delay
       await inngest.send({
         name: "code-agent/run",
         data: {
           value: input.value,
-          projectId: input.projectId
+          projectId: input.projectId,
         },
       });
       return createMessage;
