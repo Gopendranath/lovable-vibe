@@ -1,23 +1,22 @@
 "use client";
 
-import { useTRPC } from "@/trpc/client";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import MessagesContainer from "../components/messages-container"
-import { Suspense } from "react";
+import MessagesContainer from "../components/messages-container";
+import { Suspense, useState } from "react";
 import { Loader } from "lucide-react";
+import { Fragment } from "@/generated/prisma/client";
+import { ProjectHeader } from "../components/project-header";
 
 interface Props {
   projectId: string;
 }
 
 export const ProjectView = ({ projectId }: Props) => {
-  const trpc = useTRPC();
-
+  const [activeFragment, setActiveFragment] = useState<Fragment | null>(null);
 
   return (
     <div className="h-screen">
@@ -27,8 +26,15 @@ export const ProjectView = ({ projectId }: Props) => {
           minSize={20}
           className="flex flex-col min-h-0"
         >
+          <Suspense fallback={<p>loading project...</p>}>
+            <ProjectHeader projectId={projectId} />
+          </Suspense>
           <Suspense fallback={<Loader className="animate-spin" />}>
-            <MessagesContainer projectId={projectId} />
+            <MessagesContainer
+              projectId={projectId}
+              activeFragment={activeFragment}
+              setActiveFragment={setActiveFragment}
+            />
           </Suspense>
         </ResizablePanel>
         <ResizableHandle />

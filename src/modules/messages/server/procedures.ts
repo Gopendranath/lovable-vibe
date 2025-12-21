@@ -37,7 +37,7 @@ export const messageRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      await delay(1000); // 1 second rate limit delay
+      // await delay(1000); // 1 second rate limit delay
       const createMessage = await prisma.message.create({
         data: {
           projectId: input.projectId,
@@ -47,7 +47,7 @@ export const messageRouter = createTRPCRouter({
         },
       });
 
-      await delay(1000); // 1 second rate limit delay
+      // await delay(1000); // 1 second rate limit delay
       await inngest.send({
         name: "code-agent/run",
         data: {
