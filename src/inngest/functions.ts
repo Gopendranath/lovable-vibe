@@ -31,15 +31,15 @@ export const codeAgentFunction = inngest.createFunction(
       name: "code-agent",
       description: "An expert coding agent",
       system: PROMPT,
-      // model: gemini({ model: "gemini-flash-latest" }),
+      // model: gemini({ model: "gemini-3-flash-preview" }),
       // model: openai({
       //   model: "openai/gpt-oss-120b",
-      //   baseUrl: "https://api.groq.com/openai/v1/",
+      //   baseUrl: "https://api.groq.com/openai/v1",
       //   apiKey: process.env.GROQ_API_KEY,
       // }),
       model: openai({
         model: "mistral-small-latest",
-        baseUrl: "https://api.mistral.ai/v1/",
+        baseUrl: "https://api.mistral.ai/v1",
         apiKey: process.env.MISTRAL_API_KEY,
       }),
       tools: [
@@ -51,7 +51,7 @@ export const codeAgentFunction = inngest.createFunction(
           }),
           handler: async ({ command }, { step }) => {
             return await step?.run("terminal", async () => {
-              await delay(1000);
+              // await delay(1000);
               const buffers = { stdout: "", stderr: "" };
               try {
                 const sandbox = await getSandbox(sandboxId);
@@ -91,7 +91,7 @@ export const codeAgentFunction = inngest.createFunction(
             const newFiles = await step?.run(
               "createOrUpdateFiles",
               async () => {
-                await delay(1000);
+                // await delay(1000);
                 try {
                   const updatedFiles = network.state.data.files || {};
                   const sandbox = await getSandbox(sandboxId);
@@ -119,7 +119,7 @@ export const codeAgentFunction = inngest.createFunction(
           }),
           handler: async ({ files }, { step }) => {
             return await step?.run("readFiles", async () => {
-              await delay(1000); // 1 second rate limit delay
+              // await delay(1000); // 1 second rate limit delay
               try {
                 const sandbox = await getSandbox(sandboxId);
                 const contents = [];
@@ -176,7 +176,7 @@ export const codeAgentFunction = inngest.createFunction(
     
 
     await step.run("save-result", async () => {
-      await delay(1000); // 1 second rate limit delay
+      // await delay(1000); // 1 second rate limit delay
       if (isError)
         await prisma.message.create({
           data: {
