@@ -10,6 +10,7 @@ import { Suspense, useState } from "react";
 import { Loader } from "lucide-react";
 import { Fragment } from "@/generated/prisma/client";
 import { ProjectHeader } from "../components/project-header";
+import { FragmentWeb } from "../components/fragment-web";
 
 interface Props {
   projectId: string;
@@ -43,7 +44,7 @@ export const ProjectView = ({ projectId }: Props) => {
           minSize={50}
           className="flex flex-col min-h-0"
         >
-          TODO: Preview
+          {!!activeFragment && <FragmentWeb data={activeFragment} />}
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
