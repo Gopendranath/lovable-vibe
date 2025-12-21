@@ -38,7 +38,7 @@ export const codeAgentFunction = inngest.createFunction(
       //   apiKey: process.env.GROQ_API_KEY,
       // }),
       model: openai({
-        model: "mistral-small-latest",
+        model: "devstral-medium-latest",
         baseUrl: "https://api.mistral.ai/v1",
         apiKey: process.env.MISTRAL_API_KEY,
       }),
