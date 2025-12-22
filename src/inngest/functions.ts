@@ -177,7 +177,7 @@ export const codeAgentFunction = inngest.createFunction(
 
     await step.run("save-result", async () => {
       // await delay(1000); // 1 second rate limit delay
-      if (isError)
+      if (isError) {
         await prisma.message.create({
           data: {
             projectId: event.data.projectId,
@@ -186,6 +186,8 @@ export const codeAgentFunction = inngest.createFunction(
             type: "ERROR",
           },
         });
+        return
+      }
 
       return await prisma.message.create({
         data: {
