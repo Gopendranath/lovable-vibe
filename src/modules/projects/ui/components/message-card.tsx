@@ -49,7 +49,7 @@ const FragmentCard = ({
       )}
       onClick={() => onFragmentClick(fragment)}
     >
-      <Code2Icon className="size-2 mt-0.5" />
+      <Code2Icon className="size-4 mt-0.5" />
       <div className="flex flex-col flex-1">
         <span className="text-sm font-medium line-clamp-1">
           {fragment.title}
