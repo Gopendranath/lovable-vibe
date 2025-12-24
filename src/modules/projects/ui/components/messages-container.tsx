@@ -25,21 +25,29 @@ const MessageContainer = ({
     })
   );
 
-  // useEffect(() => {
-  //   const lastAssistantMessage = messages.findLast(
-  //     (message) => message.role === "ASSISTANT"
-  //   );
-  //   if (lastAssistantMessage) {
-  //     setActiveFragment(lastAssistantMessage.fragment);
-  //   }
-  // }, [messages, setActiveFragment]);
+  const lastAssistantMessageIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const lastAssistantMessage = messages.findLast(
+      (messages) => messages.role === "ASSISTANT"
+    );
+
+    if (
+      lastAssistantMessage?.fragment &&
+      lastAssistantMessage.id !== lastAssistantMessageIdRef.current
+    ) {
+      setActiveFragment(lastAssistantMessage.fragment);
+      lastAssistantMessageIdRef.current = lastAssistantMessage.id;
+    } else {
+    }
+  }, [messages, setActiveFragment]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView();
   }, [messages.length]);
 
-  const lastMessage = messages[messages.length - 1]
-  const isLastMessageUser = lastMessage?.role === "USER"
+  const lastMessage = messages[messages.length - 1];
+  const isLastMessageUser = lastMessage?.role === "USER";
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
