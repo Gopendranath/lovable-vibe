@@ -2,15 +2,17 @@ import { inngest } from "./client";
 import {
   createAgent,
   createNetwork,
+  createState,
   createTool,
   gemini,
+  type Message,
   openai,
   type Tool,
 } from "@inngest/agent-kit";
 import { Sandbox } from "@e2b/code-interpreter";
-import { getSandbox, lastAssistantTextMessageContent, delay } from "./utils";
+import { getSandbox, lastAssistantTextMessageContent, delay, parseAgentOutput } from "./utils";
 import { z } from "zod";
-import { PROMPT } from "@/prompt";
+import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from "@/prompt";
 import prisma from "@/lib/db";
 
 interface AgentState {
@@ -27,6 +29,42 @@ export const codeAgentFunction = inngest.createFunction(
       return sandbox.sandboxId;
     });
 
+    const previousMessages = await step.run(
+      "get-previous-messages",
+      async () => {
+        const formattedMessages: Message[] = [];
+
+        const messages = await prisma.message.findMany({
+          where: {
+            projectId: event.data.projectId,
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+        });
+
+        for (const message of messages) {
+          formattedMessages.push({
+            type: "text",
+            role: message.role === "ASSISTANT" ? "assistant" : "user",
+            content: message.content,
+          });
+        }
+
+        return formattedMessages;
+      }
+    );
+
+    const state = createState<AgentState>(
+      {
+        summary: "",
+        files: {},
+      },
+      {
+        messages: previousMessages,
+      }
+    );
+
     const codeAgent = createAgent<AgentState>({
       name: "code-agent",
       description: "An expert coding agent",
@@ -38,7 +76,7 @@ export const codeAgentFunction = inngest.createFunction(
       //   apiKey: process.env.GROQ_API_KEY,
       // }),
       model: openai({
-        model: "devstral-medium-latest",
+        model: "mistral-large-latest",
         baseUrl: "https://api.mistral.ai/v1",
         apiKey: process.env.MISTRAL_API_KEY,
       }),
@@ -153,6 +191,7 @@ export const codeAgentFunction = inngest.createFunction(
       name: "coding-agent-network",
       agents: [codeAgent],
       maxIter: 5,
+      defaultState: state,
       router: async ({ network }) => {
         const summary = network.state.data.summary;
         if (summary) {
@@ -162,7 +201,49 @@ export const codeAgentFunction = inngest.createFunction(
       },
     });
 
-    const result = await network.run(event.data.value);
+    const result = await network.run(event.data.value, { state });
+
+    const fragmentTitleGenerator = createAgent({
+      name: "fragment-title-generator",
+      description: "A fragment title generator",
+      system: FRAGMENT_TITLE_PROMPT,
+      // model: gemini({ model: "gemini-flash-latest" }),
+      model: openai({
+        model: "openai/gpt-oss-120b",
+        baseUrl: "https://api.groq.com/openai/v1",
+        apiKey: process.env.GROQ_API_KEY,
+      }),
+      // model: openai({
+      //   model: "devstral-medium-latest",
+      //   baseUrl: "https://api.mistral.ai/v1",
+      //   apiKey: process.env.MISTRAL_API_KEY,
+      // }),
+    });
+
+    const responseGenerator = createAgent({
+      name: "response-generator",
+      description: "A response generator",
+      system: RESPONSE_PROMPT,
+      // model: gemini({ model: "gemini-flash-latest" }),
+      model: openai({
+        model: "openai/gpt-oss-120b",
+        baseUrl: "https://api.groq.com/openai/v1",
+        apiKey: process.env.GROQ_API_KEY,
+      }),
+      // model: openai({
+      //   model: "devstral-medium-latest",
+      //   baseUrl: "https://api.mistral.ai/v1",
+      //   apiKey: process.env.MISTRAL_API_KEY,
+      // }),
+    });
+
+    const { output: fragmentTitleOutput } = await fragmentTitleGenerator.run(
+      result.state.data.summary
+    );
+    const { output: responseOutput } = await responseGenerator.run(
+      result.state.data.summary
+    );
+
 
     const isError =
       !result.state.data.summary ||
@@ -173,7 +254,6 @@ export const codeAgentFunction = inngest.createFunction(
       const host = sandbox.getHost(3000);
       return `https://${host}`;
     });
-    
 
     await step.run("save-result", async () => {
       // await delay(1000); // 1 second rate limit delay
@@ -186,19 +266,18 @@ export const codeAgentFunction = inngest.createFunction(
             type: "ERROR",
           },
         });
-        return
       }
 
       return await prisma.message.create({
         data: {
           projectId: event.data.projectId,
-          content: result.state.data.summary,
+          content: parseAgentOutput(responseOutput),
           role: "ASSISTANT",
           type: "RESULT",
           fragment: {
             create: {
               sandboxUrl: sandboxUrl,
-              title: "Fragment",
+              title: parseAgentOutput(fragmentTitleOutput),
               files: result.state.data.files,
             },
           },
