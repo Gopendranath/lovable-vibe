@@ -1,22 +1,23 @@
 import { inngest } from "@/inngest/client";
 import prisma from "@/lib/db";
-import { baseProcedure, createTRPCRouter } from "@/trpc/init";
-import { delay } from "@/inngest/utils";
+import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+// import { delay } from "@/inngest/utils";
 import { z } from "zod";
 import { generateSlug } from "random-word-slugs";
 import { TRPCError } from "@trpc/server";
 
 export const projectsRouter = createTRPCRouter({
-  getOne: baseProcedure
+  getOne: protectedProcedure
     .input(
       z.object({
         id: z.string().min(1, { message: "Id is required" }),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const existingProjects = await prisma.project.findUnique({
         where: {
-          id: input.id
+          id: input.id,
+          userId: ctx.auth.userId
         }
       });
 
@@ -26,8 +27,11 @@ export const projectsRouter = createTRPCRouter({
 
       return existingProjects;
     }),
-  getMany: baseProcedure.query(async () => {
+  getMany: protectedProcedure.query(async ({ ctx }) => {
     const projects = await prisma.project.findMany({
+      where: {
+        userId: ctx.auth.userId
+      },
       orderBy: {
         updatedAt: "asc",
       },
@@ -35,7 +39,7 @@ export const projectsRouter = createTRPCRouter({
 
     return projects;
   }),
-  create: baseProcedure
+  create: protectedProcedure
     .input(
       z.object({
         value: z
@@ -44,13 +48,14 @@ export const projectsRouter = createTRPCRouter({
           .max(10000, { message: "Prompt is too long" }),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       // await delay(1000); // 1 second rate limit delay
       const createdProject = await prisma.project.create({
         data: {
           name: generateSlug(2, {
             format: "kebab",
           }),
+          userId: ctx.auth.userId,
           messages: {
             create: {
               content: input.value,

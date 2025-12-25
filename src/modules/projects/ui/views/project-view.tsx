@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { CodeView } from "@/components/code-view";
 import { FileExplorer } from "@/components/file-explorer";
+import { UserControll } from "@/components/user-control";
 
 interface Props {
   projectId: string;
@@ -65,11 +66,12 @@ export const ProjectView = ({ projectId }: Props) => {
                 </TabsTrigger>
               </TabsList>
               <div className="ml-auto flex items-center gap-x-2">
-                <Button asChild size={"sm"} variant={"default"}>
+                <Button asChild size={"sm"} variant={"tertiary"}>
                   <Link href={"/pricing"}>
                     <CrownIcon /> Upgrade
                   </Link>
                 </Button>
+                    <UserControll/>
               </div>
             </div>
             <TabsContent value="preview">
