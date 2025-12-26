@@ -3,6 +3,7 @@ import { getQueryClient, trpc } from "@/trpc/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { Loader } from "lucide-react";
 import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary"
 
 interface Props {
   params: Promise<{
@@ -23,9 +24,12 @@ const page = async ({ params }: Props) => {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
+      <ErrorBoundary fallback={<p> ERROR </p>}>
+
       <Suspense fallback={<Loader className="animate-spin"/>}>
         <ProjectView projectId={projectId} />
       </Suspense>
+      </ErrorBoundary>
     </HydrationBoundary>
   );
 };
